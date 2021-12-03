@@ -1,71 +1,64 @@
-import pathlib
+# -*- coding: utf-8 -*-
+import torch
+import math
 
-import joblib
-import numpy as np
-from sklearn import datasets, decomposition, ensemble, metrics
-from sklearn import model_selection, pipeline, preprocessing
+# Check if CUDA is available
+assert torch.cuda.is_available()
 
+dtype = torch.float
+device = torch.device("cuda:0")  # Run on GPU!
 
-DATA_DIR = pathlib.Path("data/")
-DATASET_NAME = "CIFAR_10"
-DATASET_FILENAME = DATA_DIR / f"{DATASET_NAME}.joblib"
-N_COMPONENTS = 0.95
-OUTPUT_DIR = pathlib.Path("results/example-training-job/")
-OUTPUT_FILENAME = OUTPUT_DIR / "model.joblib"
-SEED = 42
-TEST_SIZE = 0.1
-TRAIN_N_JOBS = -1
-VERBOSITY = 10
+# Create Tensors to hold input and outputs.
+# By default, requires_grad=False, which indicates that we do not need to
+# compute gradients with respect to these Tensors during the backward pass.
+x = torch.linspace(-math.pi, math.pi, 2000, device=device, dtype=dtype)
+y = torch.sin(x)
 
+# Create random Tensors for weights. For a third order polynomial, we need
+# 4 weights: y = a + b x + c x^2 + d x^3
 
-# download the dataset (if necessary!)
-if not DATASET_FILENAME.exists():
-    print("Started downloading the dataset...")
-    bunch = datasets.fetch_openml(name=DATASET_NAME, as_frame=True)
-    joblib.dump(bunch, DATASET_FILENAME)
-    print("...finished downloading the dataset!")
-else:
-    bunch = joblib.load(DATASET_FILENAME)
+# Setting requires_grad=True indicates that we want to compute gradients with
+# respect to these Tensors during the backward pass.
 
-# split the dataset into training and testing data
-_random_state = (np.random
-                   .RandomState(SEED))
-train_df, test_df, train_target, test_target = model_selection.train_test_split(
-    bunch["data"],
-    bunch["target"],
-    stratify=bunch["target"],
-    test_size=TEST_SIZE,
-    random_state=_random_state
-)
+a = torch.randn((), device=device, dtype=dtype, requires_grad=True)
+b = torch.randn((), device=device, dtype=dtype, requires_grad=True)
+c = torch.randn((), device=device, dtype=dtype, requires_grad=True)
+d = torch.randn((), device=device, dtype=dtype, requires_grad=True)
 
-# create a pipeline
-ml_pipeline = pipeline.make_pipeline(
-    preprocessing.MinMaxScaler(),
-    decomposition.PCA(n_components=N_COMPONENTS, random_state=_random_state),
-    ensemble.RandomForestClassifier(n_jobs=TRAIN_N_JOBS,
-                                    random_state=_random_state,
-                                    verbose=VERBOSITY),
-    verbose=True,
-)
+learning_rate = 1e-6
 
-# fit the pipeline and save the trained model to disk
-print("Started training the pipeline...")
-_ = ml_pipeline.fit(train_df, train_target)
-joblib.dump(ml_pipeline, OUTPUT_FILENAME)
-print("...finished training the pipeline!")
+for t in range(2000):
+    # Forward pass: compute predicted y using operations on Tensors.
+    y_pred = a + b * x + c * x ** 2 + d * x ** 3
 
-# make predictions
-predictions = ml_pipeline.predict(test_df)
+    # Compute and print loss using operations on Tensors.
+    # Now loss is a Tensor of shape (1,)
+    # loss.item() gets the scalar value held in the loss.
+    loss = (y_pred - y).pow(2).sum()
+    
+    if t % 100 == 99:
+        print(f"Iter {t} : Loss = {loss.item():.3e}")
 
-# generate a classification report
-classification_report = metrics.classification_report(
-    test_target,
-    predictions,
-)
-print(classification_report)
+    # Use autograd to compute the backward pass. This call will compute the
+    # gradient of loss with respect to all Tensors with requires_grad=True.
+    # After this call a.grad, b.grad. c.grad and d.grad will be Tensors holding
+    # the gradient of the loss with respect to a, b, c, d respectively.
+    loss.backward()
 
+    # Manually update weights using gradient descent. Wrap in torch.no_grad()
+    # because weights have requires_grad=True, but we don't need to track this
+    # in autograd.
+    with torch.no_grad():
+        
+        a -= learning_rate * a.grad
+        b -= learning_rate * b.grad
+        c -= learning_rate * c.grad
+        d -= learning_rate * d.grad
 
+        # Manually zero the gradients after updating weights
+        a.grad = None
+        b.grad = None
+        c.grad = None
+        d.grad = None
 
-
-
-
+print(f'Result: y = {a.item()} + {b.item()} x + {c.item()} x^2 + {d.item()} x^3')
