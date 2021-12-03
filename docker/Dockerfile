@@ -1,6 +1,6 @@
-FROM ubuntu:18.04
+FROM fedora:34
 
-LABEL maintainer="pughdr <david.pugh@kaust.edu.sa>"
+LABEL maintainer="mihai <mihai.alexe@ecmwf.int>"
 
 SHELL [ "/bin/bash", "--login", "-c" ]
 
@@ -10,7 +10,7 @@ RUN apt-get update --fix-missing && \
     rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user
-ARG username=al-khawarizmi
+ARG username=ai4copernicus
 ARG uid=1000
 ARG gid=100
 ENV USER $username
@@ -39,7 +39,7 @@ RUN chown $UID:$GID /usr/local/bin/entrypoint.sh && \
 USER $USER
 
 # install miniconda
-ENV MINICONDA_VERSION latest
+ENV MINICONDA_VERSION py38_4.10.3
 ENV CONDA_DIR $HOME/miniconda3
 RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-$MINICONDA_VERSION-Linux-x86_64.sh -O ~/miniconda.sh && \
     chmod +x ~/miniconda.sh && \
@@ -74,6 +74,5 @@ RUN conda activate $ENV_PREFIX && \
 # use an entrypoint script to insure conda environment is properly activated at runtime
 ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
 
-# default command will be to launch JupyterLab server for development
-CMD [ "jupyter", "lab", "--no-browser", "--ip", "0.0.0.0" ]
-
+# default command will be to run the train script
+CMD [ "python", "src/train.py"]

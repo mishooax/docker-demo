@@ -1,44 +1,40 @@
-name: null
+name: gputest
 
 channels:
-  - intel
   - conda-forge
   - defaults
 
 dependencies:
+  - python 3.8.*
+  - black
   - bokeh
+  - cartopy
+  - cdsapi 0.5.*
+  - cudatoolkit 10.2.*
+  - cudnn
   - dask
-  - dask-ml
-  - dask-labextension
-  - datashader
-  - featuretools
-  - gh
-  - git
-  - holoviews
-  - hvplot
-  - imbalanced-learn
-  - jupyterlab
-  - jupyterlab-git
-  - jupyterlab-lsp
-  - lightgbm
+  - distributed 2021.*
+  - ipywidgets
+  - jupyterlab>=3.0.*
   - matplotlib
-  - numba
+  - netcdf4
   - numpy
-  - optuna
   - pandas
-  - panel
+  - properscoring
+  - pyaml
+  - pylint
   - pip
-  - pip:
-    - -r file:requirements.txt
-  - pyarrow
-  - python=3.7
-  - python-language-server
-  - pyviz_comms
+  - s3cmd
   - scikit-learn
   - scipy
-  - shap
-  - umap-learn
-  - wandb
+  - statsmodels
+  - seaborn
+  - tensorboard
+  - torchvision=0.10.*=py38cuda102*
+  - tqdm
+  - pyro-ppl
+  - pytorch=1.9.1=cuda102py38*
+  - pytorch-lightning
+  - timm=0.4.12
   - xarray
-  - xeus-python
-  - xgboost
+  - xskillscore
