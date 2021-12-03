@@ -7,6 +7,9 @@ def train() -> None:
     # Check if CUDA is available
     assert torch.cuda.is_available()
 
+    print("CUDA device: ", torch.cuda.get_device_name())
+    print("Device capability: ", torch.cuda.get_device_properties(torch.device("cuda:0")))
+
     dtype = torch.float
     device = torch.device("cuda:0")  # Run on GPU!
 
@@ -29,7 +32,7 @@ def train() -> None:
 
     learning_rate = 1e-6
 
-    for t in range(2000):
+    for t in range(5001):
         # Forward pass: compute predicted y using operations on Tensors.
         y_pred = a + b * x + c * x ** 2 + d * x ** 3
 
@@ -38,7 +41,7 @@ def train() -> None:
         # loss.item() gets the scalar value held in the loss.
         loss = (y_pred - y).pow(2).sum()
         
-        if t % 100 == 99:
+        if t % 1000 == 0:
             print(f"Iter {t} : Loss = {loss.item():.3e}")
 
         # Use autograd to compute the backward pass. This call will compute the
@@ -63,7 +66,7 @@ def train() -> None:
             c.grad = None
             d.grad = None
 
-    print(f'Result: y = {a.item()} + {b.item()} x + {c.item()} x^2 + {d.item()} x^3')
+    print(f"Result: y = {a.item():.4e} + {b.item():.4e} x + {c.item():.4e} x^2 + {d.item():.4e} x^3")
 
 
 if __name__ == "__main__":

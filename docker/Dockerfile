@@ -75,4 +75,4 @@ RUN conda activate $ENV_PREFIX && \
 ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
 
 # default command will be to run the train script
-CMD [ "python", "src/train.py"]
+CMD [ "nvidia-smi; python", "src/train.py"]
