@@ -1,4 +1,4 @@
-name: gputest
+name: pytorch-test
 
 channels:
   - conda-forge
@@ -18,6 +18,7 @@ dependencies:
   - jupyterlab>=3.0.*
   - matplotlib
   - netcdf4
+  - nodejs
   - numpy
   - pandas
   - properscoring

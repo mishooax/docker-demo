@@ -1,29 +1,29 @@
-FROM fedora:34
+FROM centos:7
 
-LABEL maintainer="mihai <mihai.alexe@ecmwf.int>"
+LABEL maintainer="MA <ma@email.com>"
 
 SHELL [ "/bin/bash", "--login", "-c" ]
 
-RUN apt-get update --fix-missing && \
-    apt-get install -y wget bzip2 curl git && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN yum update -y && \
+    yum install -y wget bzip2 curl git && \
+    yum clean -y all
 
 # Create a non-root user
-ARG username=ai4copernicus
+ARG username=ai4cop
 ARG uid=1000
 ARG gid=100
-ENV USER $username
-ENV UID $uid
-ENV GID $gid
-ENV HOME /home/$USER
+# ENV USER=$username
+ENV UID=$uid
+ENV GID=$gid
+ENV HOME=/home/$username
 
-RUN adduser --disabled-password \
-    --gecos "Non-root user" \
+RUN echo $username
+
+RUN useradd \
     --uid $UID \
     --gid $GID \
     --home $HOME \
-    $USER
+    $username
 
 COPY environment.yml requirements.txt /tmp/
 RUN chown $UID:$GID /tmp/environment.yml /tmp/requirements.txt
@@ -36,7 +36,7 @@ COPY docker/entrypoint.sh /usr/local/bin/
 RUN chown $UID:$GID /usr/local/bin/entrypoint.sh && \
     chmod u+x /usr/local/bin/entrypoint.sh
 
-USER $USER
+USER $username
 
 # install miniconda
 ENV MINICONDA_VERSION py38_4.10.3
@@ -64,15 +64,22 @@ WORKDIR $PROJECT_DIR
 ENV ENV_PREFIX $PROJECT_DIR/env
 RUN conda update --name base --channel defaults conda && \
     conda env create --prefix $ENV_PREFIX --file /tmp/environment.yml --force && \
-    conda clean --all --yes
+    conda clean --all --yes && \
+    rm /tmp/environment.yml
 
 # run the postBuild script to install the JupyterLab extensions
 RUN conda activate $ENV_PREFIX && \
     /usr/local/bin/postBuild.sh && \
     conda deactivate
 
+RUN mkdir $PROJECT_DIR/notebooks
+COPY notebooks/*.ipynb $PROJECT_DIR/notebooks/
+RUN chown $UID:$GID $PROJECT_DIR/notebooks/*ipynb
+
 # use an entrypoint script to insure conda environment is properly activated at runtime
 ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
 
-# default command will be to run the train script
-CMD [ "python", "src/train.py"]
+# default command will launch JupyterLab server for development with no password/token.
+# --generate-config ensure jupyter config file is created before first launch
+# CMD ["jupyter" "lab" "--generate-config"]
+CMD [ "jupyter-lab", "--port=8888", "--no-browser", "--ip=0.0.0.0", "--allow-root", "--NotebookApp.token=''", "--NotebookApp.password=''"]

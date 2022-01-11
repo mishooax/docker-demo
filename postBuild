@@ -1,2 +1,3 @@
 # if necessary you can install any necessary extensions and then build JupyterLab 
 jupyter lab build
+python -m ipykernel install --user --name pytorch-test --display-name pytorch-test

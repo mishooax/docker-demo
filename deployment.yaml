@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-deployment
+  labels:
+    app: demo
+spec:
+  selector:
+    matchLabels:
+      app: demo
+  # run a single pod
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+      - name: demo
+        image: eccr.ecmwf.int/ai4copernicus/ai4copernicus@sha256:eb1895e3502d635276686883f12bfb05b08e67d041d193249fd8c81a40222183
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8888
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo
+spec:
+  selector:
+    app: demo
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8888
+    nodePort: 31000
+  type: NodePort
