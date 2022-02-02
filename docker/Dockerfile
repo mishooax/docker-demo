@@ -60,6 +60,13 @@ ENV PROJECT_DIR $HOME/app
 RUN mkdir $PROJECT_DIR
 WORKDIR $PROJECT_DIR
 
+# copy source and notebook files
+RUN mkdir $PROJECT_DIR/src
+COPY src/* $PROJECT_DIR/src/
+
+RUN mkdir $PROJECT_DIR/notebooks
+COPY notebooks/*.ipynb $PROJECT_DIR/notebooks/
+
 # build the conda environment
 ENV ENV_PREFIX $PROJECT_DIR/env
 RUN conda update --name base --channel defaults conda && \
@@ -71,10 +78,6 @@ RUN conda update --name base --channel defaults conda && \
 RUN conda activate $ENV_PREFIX && \
     /usr/local/bin/postBuild.sh && \
     conda deactivate
-
-RUN mkdir $PROJECT_DIR/notebooks
-COPY notebooks/*.ipynb $PROJECT_DIR/notebooks/
-RUN chown $UID:$GID $PROJECT_DIR/notebooks/*ipynb
 
 # use an entrypoint script to insure conda environment is properly activated at runtime
 ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]

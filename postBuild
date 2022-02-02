@@ -1,3 +1,6 @@
-# if necessary you can install any necessary extensions and then build JupyterLab 
+# here you can install extensions and then build JupyterLab
+cd src
+pip install -e .
+cd ..
 jupyter lab build
 python -m ipykernel install --user --name pytorch-test --display-name pytorch-test
